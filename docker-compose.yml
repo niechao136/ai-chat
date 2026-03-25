@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "18000:8000"
+    environment:
+      - SECRET_KEY=prod_super_secret_key_12345
+      - ENV=production
+    restart: always
