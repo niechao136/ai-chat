@@ -1,6 +1,8 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from app.core.config import settings
 from app.api.v1.auth import router as auth_router
+from app.services.auth_service import AuthError
 import logging.config
 
 LOGGING_CONFIG = {
@@ -14,6 +16,14 @@ LOGGING_CONFIG = {
 logging.config.dictConfig(LOGGING_CONFIG)
 
 app = FastAPI(title=settings.PROJECT_NAME, version="1.0.0")
+
+# 全局业务异常处理器
+@app.exception_handler(AuthError)
+async def auth_exception_handler(request: Request, exc: AuthError):
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"detail": exc.message},
+    )
 
 app.include_router(auth_router, prefix=settings.API_V1_STR, tags=["auth"])
 

@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from app.schemas.user import UserCreate, UserLogin
-from app.services.auth_service import AuthService, AuthError
+from app.services.auth_service import AuthService
 
 router = APIRouter()
 
@@ -13,7 +13,4 @@ async def register(user: UserCreate, auth: AuthService = Depends(get_auth_servic
 
 @router.post("/login")
 async def login(login_data: UserLogin, auth: AuthService = Depends(get_auth_service)):
-    try:
-        return await auth.login_user(login_data)
-    except AuthError as e:
-        raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail=e.message)
+    return await auth.login_user(login_data)
