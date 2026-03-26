@@ -30,4 +30,4 @@ class AuthService:
         user = result.scalar_one_or_none()
         if not user or not await self.security.verify_password(login_data.password, user.hashed_password):
             raise AuthError("Invalid username or password")
-        return {"username": user.username}
+        return {"username": user.username, "user_id": user.id}

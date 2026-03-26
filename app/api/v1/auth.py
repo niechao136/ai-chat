@@ -15,4 +15,6 @@ async def register(user: UserCreate, db: AsyncSession = Depends(get_db), auth: A
 
 @router.post("/login")
 async def login(login_data: UserLogin, db: AsyncSession = Depends(get_db), auth: AuthService = Depends(get_auth_service)):
-    return await auth.login_user(db, login_data)
+    result = await auth.login_user(db, login_data)
+    # 可以在此处生成 Token，为了简化演示直接返回 user_id
+    return {"message": "Login successful", "user_id": result["user_id"]}
