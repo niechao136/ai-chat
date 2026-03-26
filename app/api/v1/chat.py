@@ -1,40 +1,46 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from pydantic import BaseModel, Field
 import logging
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
+from app.core.database import get_db
+from app.core.models import ChatSession, ChatMessage
+import uuid
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
 class ChatRequest(BaseModel):
     message: str = Field(..., min_length=1, max_length=2000)
-    session_id: str = Field(..., description="Unique session ID for conversation context")
-
-# 模拟当前用户获取逻辑
-def get_current_user_id():
-    return "default_user_id"
+    session_id: str = Field(..., description="Unique session ID")
 
 @router.post("/chat")
-async def chat(request: Request, chat_req: ChatRequest, user_id: str = Depends(get_current_user_id)):
-    # 从 app.state 获取 graph 实例
-    graph = request.app.state.graph
-    
+async def chat(request: Request, chat_req: ChatRequest, db: AsyncSession = Depends(get_db)):
     try:
-        # 使用 user_id + session_id 构造全局唯一的 thread_id，防止越权
-        thread_id = f"{user_id}:{chat_req.session_id}"
-        config = {"configurable": {"thread_id": thread_id}}
+        # 获取或创建会话
+        session = await db.get(ChatSession, chat_req.session_id)
+        if not session:
+            session = ChatSession(id=chat_req.session_id)
+            db.add(session)
+            await db.commit()
+            
+        # 记录用户消息
+        user_msg = ChatMessage(session_id=session.id, role="human", content=chat_req.message)
+        db.add(user_msg)
         
-        # 实际生产环境：建议增加对 thread_id 的权限验证
-        
+        # 调用 AI (此处保留原有 Graph 调用，或者替换为调用 LLM 的逻辑)
+        graph = request.app.state.graph
+        config = {"configurable": {"thread_id": session.id}}
         result = await graph.ainvoke({"messages": [chat_req.message]}, config=config)
         
-        if not result or "messages" not in result or not result["messages"]:
-            raise ValueError("No response generated")
-            
-        return {"response": result["messages"][-1], "session_id": chat_req.session_id}
+        ai_response = result["messages"][-1]
+        
+        # 记录 AI 消息
+        ai_msg = ChatMessage(session_id=session.id, role="ai", content=ai_response)
+        db.add(ai_msg)
+        await db.commit()
+        
+        return {"response": ai_response, "session_id": session.id}
     except Exception as e:
         logger.error(f"Chat error: {str(e)}", exc_info=True)
-        # 区分不同类型的错误，生产建议使用自定义异常类
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
-            detail="An internal error occurred during chat processing."
-        )
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal error")

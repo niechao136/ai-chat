@@ -15,6 +15,9 @@ class User(Base):
     email = Column(String, unique=True)
     hashed_password = Column(String)
 
+# 导入 ChatSession 和 ChatMessage 以便 Base.metadata.create_all 时能创建表
+from app.core.models import ChatSession, ChatMessage
+
 async def init_db():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)

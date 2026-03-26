@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI, Request, Depends, HTTPException, status
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -6,9 +7,9 @@ from app.api.v1.auth import router as auth_router
 from app.api.v1.chat import router as chat_router
 from app.services.auth_service import AuthError
 from app.services.chat_graph import init_graph
+from app.core.database import init_db
 import logging.config
 from contextlib import asynccontextmanager
-import os
 
 LOGGING_CONFIG = {
     "version": 1,
@@ -22,6 +23,10 @@ logging.config.dictConfig(LOGGING_CONFIG)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # 初始化数据库
+    await init_db()
+    
+    # 生产环境强制校验持久化存储配置
     if os.getenv("ENV") == "production" and "MEMORY" in settings.PROJECT_NAME:
         raise RuntimeError("Production environment must not use MemorySaver")
         
