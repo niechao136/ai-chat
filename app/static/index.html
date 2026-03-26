@@ -2,41 +2,65 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LangGraph Chat</title>
     <style>
         body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; }
-        #chat-box { width: 100%; max-width: 600px; height: 400px; border: 1px solid #ccc; overflow-y: scroll; padding: 10px; margin-bottom: 10px; }
-        #input-area { width: 100%; max-width: 600px; display: flex; }
-        input { flex: 1; padding: 10px; }
-        button { padding: 10px; }
+        #app { width: 100%; max-width: 600px; }
+        #chat-box { height: 300px; border: 1px solid #ccc; overflow-y: scroll; padding: 10px; margin-bottom: 10px; }
+        #auth-area { margin-bottom: 20px; }
     </style>
 </head>
 <body>
-    <h1>LangGraph Chat</h1>
-    <div id="chat-box"></div>
-    <div id="input-area">
+    <div id="app">
+        <div id="auth-area">
+            <input type="text" id="username" placeholder="Username">
+            <input type="password" id="password" placeholder="Password">
+            <button onclick="register()">Register</button>
+            <button onclick="login()">Login</button>
+        </div>
+        <div id="chat-box"></div>
         <input type="text" id="message" placeholder="Type a message...">
         <button onclick="sendMessage()">Send</button>
     </div>
 
     <script>
-        const sessionId = "session_" + Math.random().toString(36).substr(2, 9);
-        async function sendMessage() {
-            const input = document.getElementById('message');
-            const chatBox = document.getElementById('chat-box');
-            const message = input.value;
-            if (!message) return;
+        let sessionId = localStorage.getItem('sid') || "session_" + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem('sid', sessionId);
 
-            chatBox.innerHTML += `<div><b>You:</b> ${message}</div>`;
-            input.value = '';
-
-            const response = await fetch('/api/v1/chat', {
+        async function register() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const email = "user@example.com"; // 简化注册
+            await fetch('/api/v1/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: message, session_id: sessionId })
+                body: JSON.stringify({ username, email, password })
             });
-            const data = await response.json();
+            alert('Registered!');
+        }
+
+        async function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const res = await fetch('/api/v1/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+            if(res.ok) alert('Logged in!');
+        }
+
+        async function sendMessage() {
+            const msg = document.getElementById('message').value;
+            const chatBox = document.getElementById('chat-box');
+            chatBox.innerHTML += `<div><b>You:</b> ${msg}</div>`;
+            
+            const res = await fetch('/api/v1/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: msg, session_id: sessionId })
+            });
+            const data = await res.json();
             chatBox.innerHTML += `<div><b>AI:</b> ${data.response}</div>`;
         }
     </script>
