@@ -1,5 +1,5 @@
 # build frontend
-FROM node:18-slim AS frontend-build
+FROM node:22-slim AS frontend-build
 WORKDIR /app
 COPY frontend/package.json frontend/pnpm-lock.yaml* ./
 RUN npm install -g pnpm && pnpm install
@@ -20,9 +20,13 @@ RUN apt-get update && apt-get install -y nginx && rm -rf /var/lib/apt/lists/*
 
 # copy backend
 COPY . .
+# Explicitly set environment variables for pydantic
+ENV SECRET_KEY=my-very-secret-dev-key-12345678
+ENV OPENAI_API_KEY=sk-dummy
+
+
 
 # Copy frontend build: explicitly copy the build artifacts to Nginx directory
-# Next.js export usually outputs to /app/frontend/out
 RUN mkdir -p /usr/share/nginx/html && \
     cp -r frontend/out/* /usr/share/nginx/html/
 
