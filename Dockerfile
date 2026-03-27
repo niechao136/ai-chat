@@ -4,7 +4,7 @@ WORKDIR /app
 COPY frontend/package.json frontend/pnpm-lock.yaml* ./
 RUN npm install -g pnpm && pnpm install
 COPY frontend/ ./
-# 使用 build 进行构建
+# 使用 build 生成 dist
 RUN pnpm run build
 
 # build backend
@@ -22,11 +22,9 @@ RUN apt-get update && apt-get install -y nginx && rm -rf /var/lib/apt/lists/*
 COPY . .
 
 # Copy frontend build: explicitly copy the build artifacts to Nginx directory
-# Next.js default output is in frontend/.next
-# To serve via Nginx, we need the exported static files
+# Next.js export usually outputs to /app/frontend/out
 RUN mkdir -p /usr/share/nginx/html && \
-    cp -r frontend/.next/static /usr/share/nginx/html/_next/static && \
-    cp -r frontend/public/* /usr/share/nginx/html/ || true
+    cp -r frontend/out/* /usr/share/nginx/html/
 
 # copy nginx config
 COPY nginx.conf /etc/nginx/sites-available/default
