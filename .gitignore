@@ -1,9 +1,21 @@
-.env
+# Dependencies
+node_modules/
+.pnpm-store/
+.next/
+out/
+venv/
 __pycache__/
-*.pyc
-.DS_Store
+*.py[cod]
+
+# IDEs & System
 .vscode/
 .idea/
-venv/
-.env
+.DS_Store
+*.log
+
+# Secrets & Local Environment
+.env*
+chat.db
+
+# Misc
 .ai_review/
