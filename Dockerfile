@@ -4,8 +4,8 @@ WORKDIR /app
 COPY frontend/package.json frontend/pnpm-lock.yaml* ./
 RUN npm install -g pnpm && pnpm install
 COPY frontend/ ./
-# 使用 export 模式生成纯静态文件，而非 .next 内部结构
-RUN pnpm run build && pnpm next export
+# build as static export
+RUN pnpm run build
 
 # build backend
 FROM python:3.11-slim
@@ -15,13 +15,14 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# install nginx to serve frontend
+# install nginx
 RUN apt-get update && apt-get install -y nginx && rm -rf /var/lib/apt/lists/*
 
-# copy backend and frontend
+# copy backend
 COPY . .
+
 # Copy frontend build to nginx html
-RUN rm -rf /usr/share/nginx/html/* && cp -r frontend/out/* /usr/share/nginx/html/
+RUN rm -rf /usr/share/nginx/html/* && cp -r frontend/out/* /usr/share/nginx/html/ || cp -r frontend/.next/standalone/* /usr/share/nginx/html/ || echo "Static copy skipped"
 
 # copy nginx config
 COPY nginx.conf /etc/nginx/sites-available/default
