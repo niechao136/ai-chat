@@ -1,35 +1,35 @@
 #!/bin/sh
 set -e
 
-# 符号链接 Nginx 日志到标准输出
+# Link Nginx logs to stdout/stderr
 ln -sf /dev/stdout /var/log/nginx/access.log
 ln -sf /dev/stderr /var/log/nginx/error.log
 
-# 启动 Nginx
-nginx -g "daemon on;"
-
-# 定义优雅退出函数
-cleanup() {
-    echo "Shutting down..."
-    nginx -s quit
-    kill -TERM "$uvicorn_pid" 2>/dev/null
-    exit 0
-}
-
-# 捕获终止信号
-trap cleanup SIGTERM SIGINT
-
-# 启动 FastAPI，并记录其 PID
+# Start FastAPI (listen on 8000)
 uvicorn app.main:app --host 0.0.0.0 --port 8000 &
 uvicorn_pid=$!
 
-# 等待 Uvicorn 退出，或者 Nginx 崩溃
-while kill -0 "$uvicorn_pid" 2>/dev/null; do
-    if ! pgrep -x "nginx" >/dev/null; then
-        echo "Nginx died, exiting..."
-        exit 1
-    fi
+# Start Nginx in foreground (daemon off)
+# This makes Nginx the primary process
+nginx -g "daemon off;" &
+nginx_pid=$!
+
+# Cleanup function
+cleanup() {
+    echo "Shutting down..."
+    kill -TERM "$uvicorn_pid" 2>/dev/null
+    kill -TERM "$nginx_pid" 2>/dev/null
+    wait "$uvicorn_pid" "$nginx_pid" 2>/dev/null
+    exit 0
+}
+
+# Trap signals
+trap 'cleanup' TERM INT
+
+# Monitor processes
+while kill -0 "$uvicorn_pid" 2>/dev/null && kill -0 "$nginx_pid" 2>/dev/null; do
     sleep 2
 done
 
+echo "A process died. Exiting..."
 cleanup

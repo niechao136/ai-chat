@@ -20,16 +20,18 @@ RUN apt-get update && apt-get install -y nginx tini && rm -rf /var/lib/apt/lists
 
 # copy backend
 COPY . .
-# Remove hardcoded ENV secrets for security
-# ENV SECRET_KEY=...
-# ENV OPENAI_API_KEY=...
+# Set default environment variables
+ENV SECRET_KEY=my-very-secret-dev-key-12345678
+ENV GEMINI_API_KEY=AIzaSyC9zfYBsVwF9RUGgK_hgCukCxS8DmfLYOw
 
 # Copy frontend build: explicitly copy the build artifacts to Nginx directory
-RUN mkdir -p /usr/share/nginx/html && \
-    cp -r frontend/out/* /usr/share/nginx/html/
+# Fix: The build directory is /app/out, not /app/frontend/out
+COPY --from=frontend-build /app/out /usr/share/nginx/html
 
 # copy nginx config
 COPY nginx.conf /etc/nginx/sites-available/default
+# Link to enabled sites
+RUN ln -sf /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
 
 EXPOSE 8000 80
 COPY start.sh /app/start.sh

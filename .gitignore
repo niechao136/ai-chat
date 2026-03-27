@@ -20,3 +20,5 @@ chat.db
 # Misc
 .ai_review/
 .pnpm-store
+frontend/.pnpm-store
+frontend/.pnpm-store

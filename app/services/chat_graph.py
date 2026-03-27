@@ -9,8 +9,8 @@ import os
 # 配置 OpenAI 客户端以使用 Gemini API
 llm = ChatOpenAI(
     model="gemini-3-flash-preview",
-    openai_api_key=os.getenv("GEMINI_API_KEY"),
-    openai_api_base="https://generativelanguage.googleapis.com/v1beta/openai/"
+    api_key=os.getenv("GEMINI_API_KEY"),
+    base_url="https://generativelanguage.googleapis.com/v1beta/openai/"
 )
 
 class AgentState(TypedDict):
