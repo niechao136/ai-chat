@@ -19,3 +19,4 @@ chat.db
 
 # Misc
 .ai_review/
+.pnpm-store
