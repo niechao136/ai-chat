@@ -15,16 +15,14 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# install nginx
-RUN apt-get update && apt-get install -y nginx && rm -rf /var/lib/apt/lists/*
+# install nginx and tini
+RUN apt-get update && apt-get install -y nginx tini && rm -rf /var/lib/apt/lists/*
 
 # copy backend
 COPY . .
-# Explicitly set environment variables for pydantic
-ENV SECRET_KEY=my-very-secret-dev-key-12345678
-ENV OPENAI_API_KEY=sk-dummy
-
-
+# Remove hardcoded ENV secrets for security
+# ENV SECRET_KEY=...
+# ENV OPENAI_API_KEY=...
 
 # Copy frontend build: explicitly copy the build artifacts to Nginx directory
 RUN mkdir -p /usr/share/nginx/html && \
@@ -34,4 +32,7 @@ RUN mkdir -p /usr/share/nginx/html && \
 COPY nginx.conf /etc/nginx/sites-available/default
 
 EXPOSE 8000 80
-CMD ["sh", "-c", "service nginx start && uvicorn app.main:app --host 0.0.0.0 --port 8000"]
+COPY start.sh /app/start.sh
+RUN chmod +x /app/start.sh
+ENTRYPOINT ["/usr/bin/tini", "--"]
+CMD ["/app/start.sh"]
