@@ -3,7 +3,7 @@ FROM node:18-slim AS frontend-build
 WORKDIR /app
 COPY frontend/package.json frontend/pnpm-lock.yaml* ./
 RUN npm install -g pnpm && pnpm install
-COPY frontend/ .
+COPY frontend/ ./
 RUN pnpm run build
 
 # build backend
@@ -19,11 +19,8 @@ RUN apt-get update && apt-get install -y nginx && rm -rf /var/lib/apt/lists/*
 
 # copy backend and frontend
 COPY . .
-COPY --from=frontend-build /app/.next/static /usr/share/nginx/html/_next/static
-COPY --from=frontend-build /app/public /usr/share/nginx/html/public
-# Simplified: copy static files - Next.js needs a more complex export for full static
-# Assuming static export or similar logic; for now, we'll serve everything from backend or Nginx
-# To simplify, we keep the FastAPI mount for /static
+# Copy frontend build to nginx html
+RUN cp -r frontend/dist/* /usr/share/nginx/html/ || cp -r frontend/.next/* /usr/share/nginx/html/
 
 EXPOSE 8000
-CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port 8000"]
+CMD ["sh", "-c", "service nginx start && uvicorn app.main:app --host 0.0.0.0 --port 8000"]
