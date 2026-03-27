@@ -6,8 +6,7 @@ from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 import os
 
-# 配置 OpenAI 客户端以使用 Gemini API (或者直接使用 Google Generative AI)
-# 为了演示，我们使用 ChatOpenAI 兼容接口指向 Gemini，若需原生 Gemini 请更换 LangChain 集成
+# 配置 OpenAI 客户端以使用 Gemini API
 llm = ChatOpenAI(
     model="gemini-3-flash-preview",
     openai_api_key=os.getenv("GEMINI_API_KEY"),
@@ -22,7 +21,7 @@ async def chat_node(state: AgentState):
     response = await llm.ainvoke([HumanMessage(content=state["messages"][-1])])
     return {"messages": [response.content]}
 
-async def init_graph():
+def create_chat_graph():
     graph = StateGraph(AgentState)
     graph.add_node("chat", chat_node)
     graph.set_entry_point("chat")
@@ -30,3 +29,6 @@ async def init_graph():
     
     checkpointer = MemorySaver()
     return graph.compile(checkpointer=checkpointer)
+
+async def init_graph():
+    return create_chat_graph()
