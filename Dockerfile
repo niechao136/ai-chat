@@ -21,8 +21,8 @@ RUN apt-get update && apt-get install -y nginx tini && rm -rf /var/lib/apt/lists
 # copy backend
 COPY . .
 # Set default environment variables
-ENV SECRET_KEY=my-very-secret-dev-key-12345678
-ENV GEMINI_API_KEY=AIzaSyC9zfYBsVwF9RUGgK_hgCukCxS8DmfLYOw
+# API keys and secrets should be provided at runtime via environment variables
+# NOT hardcoded in the Dockerfile.
 
 # Copy frontend build: explicitly copy the build artifacts to Nginx directory
 # Fix: The build directory is /app/out, not /app/frontend/out
