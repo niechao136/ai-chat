@@ -4,12 +4,15 @@ from langgraph.graph import StateGraph, END
 from langgraph.checkpoint.memory import MemorySaver 
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
-import os
+from app.core.config import settings
 
 # 配置 OpenAI 客户端以使用 Gemini API
+if not settings.GEMINI_API_KEY:
+    raise ValueError("GEMINI_API_KEY must be set in settings")
+
 llm = ChatOpenAI(
     model="gemini-3-flash-preview",
-    api_key=os.getenv("GEMINI_API_KEY"),
+    api_key=settings.GEMINI_API_KEY,
     base_url="https://generativelanguage.googleapis.com/v1beta/openai/"
 )
 

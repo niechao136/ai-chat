@@ -7,8 +7,9 @@ class Settings(BaseSettings):
     SECRET_KEY: str = Field(...)
     ALGORITHM: str = "HS256"
     OPENAI_API_KEY: str = Field(default="sk-dummy")
+    GEMINI_API_KEY: str | None = None
 
-    model_config = SettingsConfigDict(env_file=".env")
+    model_config = SettingsConfigDict(env_file=".env", extra='ignore')
 
 
 settings = Settings()
